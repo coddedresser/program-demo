@@ -1,5 +1,7 @@
 "use client"
 
+export const dynamic = "force-dynamic";
+
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -68,7 +70,7 @@ export default function AppPage() {
           </Button>
         </div>
 
-        {/* Main Content */}
+        {/* Page Content */}
         <div className="animate-in fade-in-50 duration-500">
           {mode === "coloring" ? <ColoringPage /> : <TracingPage />}
         </div>
