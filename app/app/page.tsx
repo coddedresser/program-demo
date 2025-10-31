@@ -1,8 +1,6 @@
 "use client"
 
-export const dynamic = "force-dynamic";
-
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import ColoringPage from "@/components/coloring-page"
@@ -12,22 +10,20 @@ import MobileSidebar from "@/components/mobile-sidebar"
 
 type AppMode = "coloring" | "tracing"
 
-export default function AppPage() {
+// --- This inner component uses useSearchParams safely inside Suspense ---
+function AppPageContent() {
   const searchParams = useSearchParams()
   const [mode, setMode] = useState<AppMode>("coloring")
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
-  // Set initial mode based on URL parameter
   useEffect(() => {
-    const modeParam = searchParams.get('mode')
-    if (modeParam === 'tracing' || modeParam === 'coloring') {
+    const modeParam = searchParams.get("mode")
+    if (modeParam === "tracing" || modeParam === "coloring") {
       setMode(modeParam as AppMode)
     }
   }, [searchParams])
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen)
-  }
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted to-background">
@@ -76,5 +72,14 @@ export default function AppPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+// --- Export default wrapped in Suspense ---
+export default function AppPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <AppPageContent />
+    </Suspense>
   )
 }
