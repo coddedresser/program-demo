@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Fredoka } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "./AuthProvider"
+import ClientLayout from "@/components/ClientLayout"
 
 const fredoka = Fredoka({
   subsets: ["latin"],
@@ -14,7 +15,7 @@ export const metadata: Metadata = {
   title: "Kiwiz - AI Coloring & Tracing for Kids",
   description: "Fun AI-powered coloring pages and alphabet tracing activities for children",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
-    generator: 'v0.app'
+  generator: "v0.app",
 }
 
 export default function RootLayout({
@@ -25,7 +26,9 @@ export default function RootLayout({
   return (
     <AuthProvider>
       <html lang="en" className={`${fredoka.variable} antialiased`}>
-        <body className="overflow-x-hidden">{children}</body>
+        <body className="overflow-x-hidden pb-16">
+          <ClientLayout>{children}</ClientLayout>
+        </body>
       </html>
     </AuthProvider>
   )
