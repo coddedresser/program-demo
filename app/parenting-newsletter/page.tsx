@@ -28,17 +28,36 @@ export default function ParentingNewsletterPage() {
       return
     }
 
-    setIsSubscribing(true)
+    try {
+      setIsSubscribing(true)
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
 
-    setTimeout(() => {
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.error || "Subscription failed")
+      }
+
       toast({
         title: "Subscription Successful!",
-        description: "You’ll receive our weekly parenting newsletter in your inbox.",
+        description: "You’ll now receive our weekly parenting newsletter 🎉",
         variant: "success",
       })
+
       setEmail("")
+    } catch (error: any) {
+      toast({
+        title: "Subscription Failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "error",
+      })
+    } finally {
       setIsSubscribing(false)
-    }, 1000)
+    }
   }
 
   const handleReadMore = (articleTitle: string) => {

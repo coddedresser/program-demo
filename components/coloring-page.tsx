@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -12,6 +12,8 @@ import { useAuthGate } from "@/hooks/use-auth-gate"
 import { useUserDataCollection } from "@/hooks/use-user-data-collection"
 import { getColoringPrompts, getFlashcardPrompts } from "@/lib/prompts-complete"
 import { useRouter } from "next/navigation"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { toast } from "sonner"
 
 const SUGGESTED_PROMPTS = getColoringPrompts()
 const FLASHCARD_PROMPTS = getFlashcardPrompts(8)
@@ -22,19 +24,30 @@ export default function ColoringPage() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [currentPrompt, setCurrentPrompt] = useState("")
   const [showUpgradePopup, setShowUpgradePopup] = useState(false)
+  const [showNewsletterPopup, setShowNewsletterPopup] = useState(false)
+  const [newsletterSubscribed, setNewsletterSubscribed] = useState(false)
+  const [user, setUser] = useState<{ email?: string } | null>(null)
 
   const router = useRouter()
-
-  const {
-    isAuthGateOpen,
-    closeAuthGate,
-    executeWithAuth,
-    handleAuthSuccess,
-    actionType,
-    contentTitle
-  } = useAuthGate()
-
+  const { isAuthGateOpen, closeAuthGate, executeWithAuth, handleAuthSuccess, actionType, contentTitle } = useAuthGate()
   const { trackActivity } = useUserDataCollection()
+
+  // ✅ Fetch user data once to check newsletter subscription status
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user")
+        const data = await res.json()
+        if (data) {
+          setUser(data)
+          if (data?.newsletterSubscribed) setNewsletterSubscribed(true)
+        }
+      } catch (err) {
+        console.error("Error fetching user data:", err)
+      }
+    }
+    fetchUser()
+  }, [])
 
   const generateColoring = async (inputPrompt: string) => {
     if (!inputPrompt.trim()) return
@@ -50,6 +63,7 @@ export default function ColoringPage() {
       })
 
       const data = await response.json()
+
       if (response.status === 403) {
         // Free limit reached → show upgrade popup
         setShowUpgradePopup(true)
@@ -68,6 +82,11 @@ export default function ColoringPage() {
       }
 
       trackActivity("generate_coloring", inputPrompt)
+
+      // ✅ Trigger newsletter popup after successful generation (only if not subscribed)
+      if (!newsletterSubscribed) {
+        setTimeout(() => setShowNewsletterPopup(true), 1200)
+      }
     } catch (error) {
       console.error("Error generating coloring page:", error)
       alert("Failed to generate coloring page. Please try again.")
@@ -122,6 +141,33 @@ export default function ColoringPage() {
     }
   }
 
+  // ✅ Newsletter subscription handler
+  const handleNewsletterSubscribe = async () => {
+    if (!user?.email) {
+      toast.error("Please log in to subscribe.")
+      return
+    }
+
+    try {
+      const res = await fetch("/api/newsletter-subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: user.email }),
+      })
+
+      if (res.ok) {
+        toast.success("Subscribed successfully!")
+        setNewsletterSubscribed(true)
+        setShowNewsletterPopup(false)
+        router.push("/parenting-newsletter")
+      } else {
+        toast.error("Subscription failed")
+      }
+    } catch (err) {
+      toast.error("Error subscribing to newsletter")
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Auth Gate Modal */}
@@ -133,22 +179,20 @@ export default function ColoringPage() {
         contentTitle={contentTitle}
       />
 
-      {/* ====== Upgrade Popup ====== */}
+      {/* ===== Upgrade Popup ===== */}
       {showUpgradePopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
           <Card className="p-8 bg-background shadow-2xl max-w-md text-center">
             <h2 className="text-2xl font-bold text-primary mb-4">Free Limit Reached</h2>
             <p className="text-muted-foreground mb-6">
-              You’ve used all 5 free generations. Upgrade to <span className="font-semibold text-primary">Premium</span> for unlimited access!
+              You’ve used all 5 free generations. Upgrade to{" "}
+              <span className="font-semibold text-primary">Premium</span> for unlimited access!
             </p>
             <div className="flex justify-center gap-3">
               <Button onClick={() => setShowUpgradePopup(false)} variant="outline">
                 Cancel
               </Button>
-              <Button
-                className="bg-primary hover:bg-primary/90 text-white"
-                onClick={() => router.push("/membership")}
-              >
+              <Button className="bg-primary hover:bg-primary/90 text-white" onClick={() => router.push("/membership")}>
                 Upgrade Now
               </Button>
             </div>
@@ -156,6 +200,25 @@ export default function ColoringPage() {
         </div>
       )}
 
+      {/* ===== Newsletter Popup ===== */}
+      <Dialog open={showNewsletterPopup} onOpenChange={setShowNewsletterPopup}>
+        <DialogContent className="max-w-md text-center">
+          <DialogHeader>
+            <DialogTitle>Join Our Parenting Newsletter</DialogTitle>
+          </DialogHeader>
+          <p className="text-muted-foreground mb-6">
+            Get weekly parenting tips, learning ideas, and fun activities straight to your inbox!
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button onClick={handleNewsletterSubscribe}>Subscribe Now</Button>
+            <Button variant="outline" onClick={() => setShowNewsletterPopup(false)}>
+              Maybe Later
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== Main UI ===== */}
       {!generatedImage && (
         <>
           <Card className="p-6 bg-card/50 backdrop-blur-sm border-primary/20 shadow-lg">
@@ -183,7 +246,6 @@ export default function ColoringPage() {
         </>
       )}
 
-      {/* Generated Image Display */}
       {generatedImage && (
         <Card className="p-6 bg-card/50 backdrop-blur-sm border-primary/20 shadow-lg animate-in fade-in-50 duration-500">
           <div className="flex justify-center mb-4">
@@ -196,10 +258,17 @@ export default function ColoringPage() {
           </div>
 
           <div className="flex gap-3 justify-center">
-            <Button onClick={handleDownload} className="bg-primary text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200">
+            <Button
+              onClick={handleDownload}
+              className="bg-primary text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+            >
               <Download className="w-4 h-4 mr-2" /> Download
             </Button>
-            <Button onClick={handlePrint} variant="outline" className="border-primary text-primary hover:bg-primary/10 shadow-md hover:scale-105 transition-all duration-200">
+            <Button
+              onClick={handlePrint}
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary/10 shadow-md hover:scale-105 transition-all duration-200"
+            >
               <Printer className="w-4 h-4 mr-2" /> Print the PDF
             </Button>
           </div>
