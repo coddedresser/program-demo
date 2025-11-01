@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -12,6 +11,7 @@ import AuthGate from "@/components/auth-gate"
 import { useAuthGate } from "@/hooks/use-auth-gate"
 import { useUserDataCollection } from "@/hooks/use-user-data-collection"
 import { getColoringPrompts, getFlashcardPrompts } from "@/lib/prompts-complete"
+import { useRouter } from "next/navigation"
 
 const SUGGESTED_PROMPTS = getColoringPrompts()
 const FLASHCARD_PROMPTS = getFlashcardPrompts(8)
@@ -21,7 +21,10 @@ export default function ColoringPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedImage, setGeneratedImage] = useState<string | null>(null)
   const [currentPrompt, setCurrentPrompt] = useState("")
-  
+  const [showUpgradePopup, setShowUpgradePopup] = useState(false)
+
+  const router = useRouter()
+
   const {
     isAuthGateOpen,
     closeAuthGate,
@@ -30,7 +33,7 @@ export default function ColoringPage() {
     actionType,
     contentTitle
   } = useAuthGate()
-  
+
   const { trackActivity } = useUserDataCollection()
 
   const generateColoring = async (inputPrompt: string) => {
@@ -42,33 +45,31 @@ export default function ColoringPage() {
     try {
       const response = await fetch("/api/generate-coloring", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ prompt: inputPrompt }),
       })
 
-      if (!response.ok) {
-        throw new Error("Failed to generate coloring page")
+      const data = await response.json()
+      if (response.status === 403) {
+        // Free limit reached → show upgrade popup
+        setShowUpgradePopup(true)
+        setIsGenerating(false)
+        return
       }
 
-      const data = await response.json()
-      console.log('API Response:', data) // Debug logging
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || "Failed to generate coloring page")
+      }
 
-      if (data.success && data.imageUrl) {
-        // Use the actual generated image from the API
-        console.log('Using generated image:', data.imageUrl)
+      if (data.imageUrl) {
         setGeneratedImage(data.imageUrl)
       } else {
-        // Fallback to placeholder if no image URL is provided
-        console.log('Using placeholder image')
         setGeneratedImage(`/placeholder.svg?height=300&width=300&text=${encodeURIComponent(inputPrompt)}`)
       }
-      
-      // Track user activity
-      trackActivity('generate_coloring', inputPrompt)
+
+      trackActivity("generate_coloring", inputPrompt)
     } catch (error) {
-      console.error("Error:", error)
+      console.error("Error generating coloring page:", error)
       alert("Failed to generate coloring page. Please try again.")
     } finally {
       setIsGenerating(false)
@@ -87,53 +88,37 @@ export default function ColoringPage() {
 
   const handleDownload = () => {
     if (generatedImage && currentPrompt) {
-      executeWithAuth(
-        () => {
-          // Convert SVG to JPG format for download
-          const canvas = document.createElement('canvas')
-          const ctx = canvas.getContext('2d')
-          if (!ctx) return
-          
-          canvas.width = 800
-          canvas.height = 600
-          
-          // White background
-          ctx.fillStyle = 'white'
-          ctx.fillRect(0, 0, canvas.width, canvas.height)
-          
-          // Load and draw the image
-          const img = new Image()
-          img.onload = () => {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-            
-            // Convert to JPG and download
-            const link = document.createElement('a')
-            link.download = `coloring-${currentPrompt.replace(/\s+/g, "-").toLowerCase()}.jpg`
-            link.href = canvas.toDataURL('image/jpeg', 0.9)
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
-          }
-          img.src = generatedImage
-          
-          trackActivity('download_coloring', currentPrompt)
-        },
-        "download",
-        `Coloring Page: ${currentPrompt}`
-      )
+      executeWithAuth(() => {
+        const canvas = document.createElement("canvas")
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return
+        canvas.width = 800
+        canvas.height = 600
+        ctx.fillStyle = "white"
+        ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+        const img = new Image()
+        img.onload = () => {
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+          const link = document.createElement("a")
+          link.download = `coloring-${currentPrompt.replace(/\s+/g, "-").toLowerCase()}.jpg`
+          link.href = canvas.toDataURL("image/jpeg", 0.9)
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+        }
+        img.src = generatedImage
+        trackActivity("download_coloring", currentPrompt)
+      }, "download", `Coloring Page: ${currentPrompt}`)
     }
   }
 
   const handlePrint = () => {
     if (generatedImage && currentPrompt) {
-      executeWithAuth(
-        () => {
-          printImage(generatedImage, `Coloring Page: ${currentPrompt}`)
-          trackActivity('print_coloring', currentPrompt)
-        },
-        "print",
-        `Coloring Page: ${currentPrompt}`
-      )
+      executeWithAuth(() => {
+        printImage(generatedImage, `Coloring Page: ${currentPrompt}`)
+        trackActivity("print_coloring", currentPrompt)
+      }, "print", `Coloring Page: ${currentPrompt}`)
     }
   }
 
@@ -148,9 +133,31 @@ export default function ColoringPage() {
         contentTitle={contentTitle}
       />
 
+      {/* ====== Upgrade Popup ====== */}
+      {showUpgradePopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
+          <Card className="p-8 bg-background shadow-2xl max-w-md text-center">
+            <h2 className="text-2xl font-bold text-primary mb-4">Free Limit Reached</h2>
+            <p className="text-muted-foreground mb-6">
+              You’ve used all 5 free generations. Upgrade to <span className="font-semibold text-primary">Premium</span> for unlimited access!
+            </p>
+            <div className="flex justify-center gap-3">
+              <Button onClick={() => setShowUpgradePopup(false)} variant="outline">
+                Cancel
+              </Button>
+              <Button
+                className="bg-primary hover:bg-primary/90 text-white"
+                onClick={() => router.push("/membership")}
+              >
+                Upgrade Now
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
       {!generatedImage && (
         <>
-          {/* How to use section */}
           <Card className="p-6 bg-card/50 backdrop-blur-sm border-primary/20 shadow-lg">
             <h3 className="text-xl font-bold text-primary mb-4 text-center flex items-center justify-center gap-2">
               <Sparkles className="w-5 h-5" />
@@ -189,26 +196,17 @@ export default function ColoringPage() {
           </div>
 
           <div className="flex gap-3 justify-center">
-            <Button
-              onClick={handleDownload}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download
+            <Button onClick={handleDownload} className="bg-primary text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200">
+              <Download className="w-4 h-4 mr-2" /> Download
             </Button>
-            <Button
-              onClick={handlePrint}
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary/10 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105 bg-transparent"
-            >
-              <Printer className="w-4 h-4 mr-2" />
-              Print the PDF
+            <Button onClick={handlePrint} variant="outline" className="border-primary text-primary hover:bg-primary/10 shadow-md hover:scale-105 transition-all duration-200">
+              <Printer className="w-4 h-4 mr-2" /> Print the PDF
             </Button>
           </div>
         </Card>
       )}
 
-      {/* Search/Prompt Bar */}
+      {/* Input Form */}
       <form onSubmit={handleSubmit} className="relative">
         <div className="flex items-center bg-card rounded-full p-2 shadow-lg border border-primary/20 hover:shadow-xl transition-shadow duration-200">
           <Input
@@ -218,40 +216,25 @@ export default function ColoringPage() {
             className="flex-1 border-none bg-transparent text-lg px-4 focus-visible:ring-0 placeholder:text-muted-foreground/60"
             disabled={isGenerating}
           />
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="rounded-full text-primary hover:bg-primary/10 transition-colors duration-200"
-          >
+          <Button type="button" size="icon" variant="ghost" className="rounded-full text-primary hover:bg-primary/10">
             <Mic className="w-5 h-5" />
           </Button>
         </div>
       </form>
 
-      {/* Loading State */}
+      {/* Loader */}
       {isGenerating && (
         <Card className="p-8 bg-card/50 backdrop-blur-sm border-primary/20 shadow-lg animate-in fade-in-50 duration-300">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
             <p className="text-lg text-muted-foreground">Creating your magical coloring page...</p>
-            <div className="flex gap-1">
-              {[...Array(3)].map((_, i) => (
-                <div
-                  key={i}
-                  className="w-2 h-2 bg-primary rounded-full animate-bounce"
-                  style={{ animationDelay: `${i * 0.2}s` }}
-                />
-              ))}
-            </div>
           </div>
         </Card>
       )}
 
-      {/* Suggested Prompts */}
+      {/* Prompts Section */}
       {!isGenerating && (
         <div className="space-y-6">
-          {/* Coloring Prompts */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-center text-primary">🎨 Coloring Ideas</h3>
             <div className="flex flex-wrap gap-2 justify-center">
@@ -260,8 +243,7 @@ export default function ColoringPage() {
                   key={index}
                   onClick={() => handleSuggestedPrompt(suggestedPrompt)}
                   variant="outline"
-                  className="rounded-full text-sm bg-card hover:bg-primary/10 border-primary/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 animate-float"
-                  style={{ animationDelay: `${index * 0.1}s` }}
+                  className="rounded-full text-sm bg-card hover:bg-primary/10 border-primary/20 shadow-sm hover:scale-105 transition-all"
                 >
                   {suggestedPrompt}
                 </Button>
@@ -269,7 +251,6 @@ export default function ColoringPage() {
             </div>
           </div>
 
-          {/* Flashcard Prompts */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-center text-primary">📚 Learning Cards</h3>
             <div className="flex flex-wrap gap-2 justify-center">
@@ -278,8 +259,7 @@ export default function ColoringPage() {
                   key={`flashcard-${index}`}
                   onClick={() => handleSuggestedPrompt(flashcardPrompt)}
                   variant="outline"
-                  className="rounded-full text-sm bg-card hover:bg-primary/10 border-primary/20 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105 animate-float"
-                  style={{ animationDelay: `${(index + SUGGESTED_PROMPTS.length) * 0.1}s` }}
+                  className="rounded-full text-sm bg-card hover:bg-primary/10 border-primary/20 shadow-sm hover:scale-105 transition-all"
                 >
                   {flashcardPrompt}
                 </Button>

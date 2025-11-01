@@ -4,6 +4,7 @@ import { Fredoka } from "next/font/google"
 import "./globals.css"
 import { AuthProvider } from "./AuthProvider"
 import ClientLayout from "@/components/ClientLayout"
+import { ToastProviderWrapper } from "@/components/ui/use-toast" // ✅ import toast provider
 
 const fredoka = Fredoka({
   subsets: ["latin"],
@@ -13,7 +14,8 @@ const fredoka = Fredoka({
 
 export const metadata: Metadata = {
   title: "Kiwiz - AI Coloring & Tracing for Kids",
-  description: "Fun AI-powered coloring pages and alphabet tracing activities for children",
+  description:
+    "Fun AI-powered coloring pages and alphabet tracing activities for children",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
   generator: "v0.app",
 }
@@ -27,7 +29,10 @@ export default function RootLayout({
     <AuthProvider>
       <html lang="en" className={`${fredoka.variable} antialiased`}>
         <body className="overflow-x-hidden pb-16">
-          <ClientLayout>{children}</ClientLayout>
+          {/* ✅ Wrap your entire app in the ToastProvider */}
+          <ToastProviderWrapper>
+            <ClientLayout>{children}</ClientLayout>
+          </ToastProviderWrapper>
         </body>
       </html>
     </AuthProvider>
