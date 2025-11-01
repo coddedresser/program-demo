@@ -1,7 +1,8 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Menu, User, X } from "lucide-react"
+import { Menu, User, X, Shield } from "lucide-react"
 import { useKindeBrowserClient } from "@kinde-oss/kinde-auth-nextjs"
 import { LoginLink } from "@kinde-oss/kinde-auth-nextjs/components"
 import Link from "next/link"
@@ -11,12 +12,44 @@ interface MobileHeaderProps {
   isMenuOpen: boolean
 }
 
+interface CurrentUser {
+  id: string
+  email: string
+  name?: string
+  isAdmin?: boolean
+}
+
 export default function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   const { user, isAuthenticated, isLoading } = useKindeBrowserClient()
+  const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null)
+  const [loadingUser, setLoadingUser] = useState(true)
+
+  // ✅ Fetch user info from backend (to check admin)
+  useEffect(() => {
+    if (!isAuthenticated) return
+
+    const fetchUser = async () => {
+      try {
+        const res = await fetch("/api/user/me")
+        if (!res.ok) return
+        const data = await res.json()
+        console.log("Fetched user:", data)
+
+        const formattedUser = data.user ? data.user : data
+        setCurrentUser(formattedUser)
+      } catch (err) {
+        console.error("Failed to fetch current user:", err)
+      } finally {
+        setLoadingUser(false)
+      }
+    }
+
+    fetchUser()
+  }, [isAuthenticated])
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-b border-border">
-      <div className="flex items-center justify-between px-4 md:px-6 py-3 h-16">
+      <div className="relative flex items-center justify-between px-4 md:px-6 py-3 h-16">
         {/* Left: Sidebar Toggle Button */}
         <Button
           variant="ghost"
@@ -28,45 +61,57 @@ export default function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderP
           {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
         </Button>
 
-        {/* Center: Clickable Logo (acts as Home button) */}
-        <Link 
-          href="/" 
-          className="flex items-center gap-2 group transition-transform hover:scale-[1.03]"
-        >
-          <span className="text-xl font-bold text-primary group-hover:text-primary/80">
-            Kiwiz
-          </span>
-        </Link>
+        {/* Center: Logo */}
+        <div className="absolute left-1/2 transform -translate-x-1/2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 group transition-transform hover:scale-[1.03]"
+          >
+            <span className="text-xl font-extrabold text-primary group-hover:text-primary/80 tracking-wide">
+              Kiwiz
+            </span>
+          </Link>
+        </div>
 
-        {/* Right: Profile Icon */}
-        <div className="flex items-center">
+        {/* Right: User / Admin Controls */}
+        <div className="flex items-center gap-2">
           {isLoading ? (
             <div className="w-8 h-8 rounded-full bg-muted animate-pulse" />
           ) : isAuthenticated ? (
-            <Link href="/dashboard">
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="p-0 hover:bg-muted/50 transition-colors"
-              >
-                {user?.picture ? (
-                  <img
-                    src={user.picture}
-                    alt={user.given_name || "User"}
-                    className="w-8 h-8 rounded-full border border-primary/20"
-                  />
-                ) : (
-                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                    <User className="h-4 w-4 text-primary" />
+            <>
+              {/* ✅ Admin Panel Button - Highlighted */}
+              {!loadingUser && currentUser?.isAdmin && (
+                <Link href="/admin">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="text-sm font-semibold bg-amber-500 hover:bg-amber-600 text-white flex items-center gap-1 transition-all"
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin
+                  </Button>
+                </Link>
+              )}
+
+              {/* ✅ Simple clean User icon */}
+              <Link href="/dashboard">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="p-0 hover:bg-muted/50 transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                    <User className="h-5 w-5 text-primary" />
                   </div>
-                )}
-              </Button>
-            </Link>
+                </Button>
+              </Link>
+            </>
           ) : (
+            // Not logged in → Show Login
             <LoginLink postLoginRedirectURL="/dashboard">
-              <Button 
-                variant="ghost" 
-                size="icon" 
+              <Button
+                variant="ghost"
+                size="icon"
                 className="text-foreground hover:bg-muted/50 transition-colors"
               >
                 <User className="h-6 w-6" />
