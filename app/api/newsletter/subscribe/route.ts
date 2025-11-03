@@ -29,10 +29,11 @@ export async function POST(req: Request) {
 
     // ✅ Upsert newsletter subscriber
     await prisma.newsletterSubscriber.upsert({
-      where: { email },
-      update: { userId },
+      where: { userId },
+      update: { email },
       create: { userId, email },
     });
+
 
     // ✅ Mark user as subscribed
     await prisma.user.update({

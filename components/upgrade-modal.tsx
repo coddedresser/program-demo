@@ -10,7 +10,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
-import { AlertTriangle } from "lucide-react"
+import { Sparkles, Crown, X } from "lucide-react"
+import { motion } from "framer-motion"
+import * as DialogPrimitive from "@radix-ui/react-dialog"
 
 interface UpgradeModalProps {
   open: boolean
@@ -22,28 +24,86 @@ export default function UpgradeModal({ open, onClose }: UpgradeModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md text-center backdrop-blur-md">
-        <DialogHeader>
-          <div className="flex justify-center mb-3">
-            <AlertTriangle className="h-10 w-10 text-yellow-500" />
-          </div>
-          <DialogTitle className="text-xl font-bold text-primary">
-            Free Limit Reached
-          </DialogTitle>
-          <DialogDescription className="text-muted-foreground mt-2">
-            You’ve used your 5 free generations. Upgrade to Premium for unlimited coloring and tracing fun!
-          </DialogDescription>
-        </DialogHeader>
+      {/* Overlay — stays fixed, allows background scroll */}
+      <DialogPrimitive.Portal>
+        <DialogPrimitive.Overlay
+          className="fixed inset-0 bg-black/30 backdrop-blur-sm z-[60]"
+          style={{ pointerEvents: "none" }}
+        />
 
-        <DialogFooter className="flex flex-col sm:flex-row justify-center gap-3 mt-4">
-          <Button variant="default" onClick={() => router.push("/membership")}>
-            Upgrade Now
-          </Button>
-          <Button variant="outline" onClick={onClose}>
-            Maybe Later
-          </Button>
-        </DialogFooter>
-      </DialogContent>
+        {/* Fixed Modal (centered, non-scrollable) */}
+        <DialogContent
+          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+          sm:max-w-md w-[90%] p-0 rounded-2xl border border-yellow-200 
+          shadow-2xl backdrop-blur-xl bg-gradient-to-br from-white/90 to-yellow-50/80 
+          z-[70] focus:outline-none"
+          style={{
+            position: "fixed",
+            transform: "translate(-50%, -50%)",
+            overflow: "visible",
+          }}
+        >
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 p-2 rounded-full hover:bg-yellow-100 transition"
+          >
+            <X className="h-4 w-4 text-gray-600" />
+          </button>
+
+          <DialogHeader className="flex flex-col items-center p-6 pb-3">
+            <motion.div
+              initial={{ scale: 0.7, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 120 }}
+              className="w-20 h-20 rounded-full bg-gradient-to-br from-yellow-400 to-orange-400 flex items-center justify-center shadow-lg mb-4"
+            >
+              <Crown className="h-10 w-10 text-white" />
+            </motion.div>
+
+            <DialogTitle className="text-2xl font-bold text-yellow-600">
+              Free Limit Reached
+            </DialogTitle>
+
+            <DialogDescription className="text-gray-700 text-sm mt-2 max-w-sm text-center">
+              You’ve used your <span className="font-semibold text-yellow-700">5 free generations</span>.
+              Upgrade to <span className="font-semibold text-yellow-700">Premium</span> for
+              <br /> unlimited coloring, tracing, and creative fun!
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="px-6 py-4">
+            <div className="bg-yellow-100/70 rounded-xl p-4 text-left space-y-2 border border-yellow-200">
+              {[
+                "Unlimited AI generations",
+                "Access to premium templates",
+                "Priority generation speed",
+              ].map((text, i) => (
+                <p key={i} className="flex items-center gap-2 text-sm text-gray-800">
+                  <Sparkles className="h-4 w-4 text-yellow-500" /> {text}
+                </p>
+              ))}
+            </div>
+          </div>
+
+          <DialogFooter className="flex flex-col sm:flex-row justify-center gap-3 px-6 pb-6">
+            <Button
+              onClick={() => router.push("/membership")}
+              className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:opacity-90 text-white font-semibold h-12 rounded-xl transition"
+            >
+              Upgrade Now
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="w-full border-yellow-300 text-yellow-700 hover:bg-yellow-50 h-12 rounded-xl"
+            >
+              Maybe Later
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </DialogPrimitive.Portal>
     </Dialog>
   )
 }

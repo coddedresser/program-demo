@@ -41,7 +41,7 @@ function AppPageContent() {
       />
 
       {/* Main Content */}
-      <div className="container max-w-md mx-auto px-4 py-6 pt-24">
+      <div className="container max-w-lg mx-auto px-4 py-6 pt-24">
         {/* Header Tabs */}
         <div className="flex justify-center gap-4 mb-8">
           <Button

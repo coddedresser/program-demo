@@ -1,22 +1,22 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { LayoutDashboard, Users, Mail, Home } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import clsx from "clsx"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { LayoutDashboard, Users, Mail, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import clsx from "clsx";
 
 const sidebarLinks = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/users", label: "Users", icon: Users },
   { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
-]
+];
 
 export default function AdminSidebar() {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-48 bg-background border-r border-border flex flex-col justify-between">
+    <aside className="fixed left-0 top-0 h-screen w-48 overflow-y-auto bg-background border-r border-border flex flex-col justify-between">
       {/* Top section */}
       <div className="mt-6">
         <h1 className="text-center text-lg font-semibold mb-6 text-primary">Admin</h1>
@@ -52,5 +52,5 @@ export default function AdminSidebar() {
         </Link>
       </div>
     </aside>
-  )
+  );
 }

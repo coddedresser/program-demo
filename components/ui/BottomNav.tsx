@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 
 const navItems = [
   { id: "home", label: "Home", icon: Home, href: "/" },
-  { id: "create", label: "Create", icon: Sparkles, href: "/app" },
+  { id: "create", label: "Create", icon: Sparkles, href: "/create" },
   // 🔽 Updated Discover tab to go directly to the Parenting Newsletter
   { id: "discover", label: "Discover", icon: BookOpen, href: "/parenting-newsletter" },
   { id: "profile", label: "Profile", icon: User, href: "/dashboard" },

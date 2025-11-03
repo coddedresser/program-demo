@@ -50,7 +50,7 @@ export default function AuthGate({ isOpen, onClose, onSuccess, actionType, conte
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md mx-auto animate-in fade-in-50 duration-300">
+      <Card className="w-full max-w-lg mx-auto animate-in fade-in-50 duration-300">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-between items-start">
             <div className="flex-1">

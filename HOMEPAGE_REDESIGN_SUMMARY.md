@@ -11,7 +11,7 @@ I've completely redesigned the homepage to be mobile-centric, engaging, and conv
 ### **Responsive Layout**
 - ✅ **Mobile Header**: Integrated with burger menu and profile button
 - ✅ **Mobile Sidebar**: Full navigation access
-- ✅ **Max Width**: `max-w-md` for optimal mobile viewing
+- ✅ **Max Width**: `max-w-lg` for optimal mobile viewing
 - ✅ **Touch-Friendly**: Large buttons and touch targets
 - ✅ **Vertical Stacking**: All content optimized for mobile screens
 

@@ -39,7 +39,7 @@ export default function NewsletterPopup({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md rounded-2xl border border-primary/20 shadow-xl bg-card/70 backdrop-blur-lg">
+      <DialogContent className="sm:max-w-lg rounded-2xl border border-primary/20 shadow-xl bg-card/70 backdrop-blur-lg">
         <DialogHeader className="text-center">
           <DialogTitle className="flex flex-col items-center gap-2 text-lg font-bold text-primary">
             <Mail className="w-6 h-6 text-primary" />

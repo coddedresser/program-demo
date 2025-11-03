@@ -32,7 +32,6 @@ export default function ColoringPage() {
   const { isAuthGateOpen, closeAuthGate, executeWithAuth, handleAuthSuccess, actionType, contentTitle } = useAuthGate()
   const { trackActivity } = useUserDataCollection()
 
-  // ✅ Fetch user data once to check newsletter subscription status
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -51,7 +50,6 @@ export default function ColoringPage() {
 
   const generateColoring = async (inputPrompt: string) => {
     if (!inputPrompt.trim()) return
-
     setIsGenerating(true)
     setCurrentPrompt(inputPrompt)
 
@@ -63,30 +61,18 @@ export default function ColoringPage() {
       })
 
       const data = await response.json()
-
       if (response.status === 403) {
-        // Free limit reached → show upgrade popup
         setShowUpgradePopup(true)
         setIsGenerating(false)
         return
       }
 
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || "Failed to generate coloring page")
-      }
+      if (!response.ok || !data.success) throw new Error(data.error || "Failed to generate coloring page")
 
-      if (data.imageUrl) {
-        setGeneratedImage(data.imageUrl)
-      } else {
-        setGeneratedImage(`/placeholder.svg?height=300&width=300&text=${encodeURIComponent(inputPrompt)}`)
-      }
-
+      setGeneratedImage(data.imageUrl || `/placeholder.svg?height=300&width=300&text=${encodeURIComponent(inputPrompt)}`)
       trackActivity("generate_coloring", inputPrompt)
 
-      // ✅ Trigger newsletter popup after successful generation (only if not subscribed)
-      if (!newsletterSubscribed) {
-        setTimeout(() => setShowNewsletterPopup(true), 1200)
-      }
+      if (!newsletterSubscribed) setTimeout(() => setShowNewsletterPopup(true), 1200)
     } catch (error) {
       console.error("Error generating coloring page:", error)
       alert("Failed to generate coloring page. Please try again.")
@@ -108,25 +94,7 @@ export default function ColoringPage() {
   const handleDownload = () => {
     if (generatedImage && currentPrompt) {
       executeWithAuth(() => {
-        const canvas = document.createElement("canvas")
-        const ctx = canvas.getContext("2d")
-        if (!ctx) return
-        canvas.width = 800
-        canvas.height = 600
-        ctx.fillStyle = "white"
-        ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-        const img = new Image()
-        img.onload = () => {
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
-          const link = document.createElement("a")
-          link.download = `coloring-${currentPrompt.replace(/\s+/g, "-").toLowerCase()}.jpg`
-          link.href = canvas.toDataURL("image/jpeg", 0.9)
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
-        }
-        img.src = generatedImage
+        downloadImage(generatedImage, `coloring-${currentPrompt.replace(/\s+/g, "-").toLowerCase()}.jpg`)
         trackActivity("download_coloring", currentPrompt)
       }, "download", `Coloring Page: ${currentPrompt}`)
     }
@@ -141,7 +109,6 @@ export default function ColoringPage() {
     }
   }
 
-  // ✅ Newsletter subscription handler
   const handleNewsletterSubscribe = async () => {
     if (!user?.email) {
       toast.error("Please log in to subscribe.")
@@ -160,17 +127,14 @@ export default function ColoringPage() {
         setNewsletterSubscribed(true)
         setShowNewsletterPopup(false)
         router.push("/parenting-newsletter")
-      } else {
-        toast.error("Subscription failed")
-      }
-    } catch (err) {
+      } else toast.error("Subscription failed")
+    } catch {
       toast.error("Error subscribing to newsletter")
     }
   }
 
   return (
-    <div className="space-y-6">
-      {/* Auth Gate Modal */}
+    <div className="max-w-3xl mx-auto space-y-6 px-4">
       <AuthGate
         isOpen={isAuthGateOpen}
         onClose={closeAuthGate}
@@ -179,20 +143,20 @@ export default function ColoringPage() {
         contentTitle={contentTitle}
       />
 
-      {/* ===== Upgrade Popup ===== */}
+      {/* Upgrade Popup */}
       {showUpgradePopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-50">
-          <Card className="p-8 bg-background shadow-2xl max-w-md text-center">
-            <h2 className="text-2xl font-bold text-primary mb-4">Free Limit Reached</h2>
-            <p className="text-muted-foreground mb-6">
+          <Card className="p-8 bg-yellow-400 text-orange-800 shadow-2xl max-w-lg text-center border-4 border-orange-500">
+            <h2 className="text-2xl font-extrabold mb-4">Free Limit Reached</h2>
+            <p className="mb-6 text-gray-800">
               You’ve used all 5 free generations. Upgrade to{" "}
-              <span className="font-semibold text-primary">Premium</span> for unlimited access!
+              <span className="font-semibold text-orange-800">Premium</span> for unlimited access!
             </p>
             <div className="flex justify-center gap-3">
-              <Button onClick={() => setShowUpgradePopup(false)} variant="outline">
+              <Button onClick={() => setShowUpgradePopup(false)} variant="outline" className="bg-white text-gray-800">
                 Cancel
               </Button>
-              <Button className="bg-primary hover:bg-primary/90 text-white" onClick={() => router.push("/membership")}>
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={() => router.push("/membership")}>
                 Upgrade Now
               </Button>
             </div>
@@ -200,137 +164,134 @@ export default function ColoringPage() {
         </div>
       )}
 
-      {/* ===== Newsletter Popup ===== */}
+      {/* Newsletter Popup */}
       <Dialog open={showNewsletterPopup} onOpenChange={setShowNewsletterPopup}>
-        <DialogContent className="max-w-md text-center">
+        <DialogContent className="max-w-lg text-center bg-yellow-400 text-orange-800 rounded-2xl border-4 border-orange-500">
           <DialogHeader>
-            <DialogTitle>Join Our Parenting Newsletter</DialogTitle>
+            <DialogTitle className="text-2xl font-extrabold">Join Our Parenting Newsletter</DialogTitle>
           </DialogHeader>
-          <p className="text-muted-foreground mb-6">
+          <p className="mb-6 text-gray-800">
             Get weekly parenting tips, learning ideas, and fun activities straight to your inbox!
           </p>
           <div className="flex justify-center gap-4">
-            <Button onClick={handleNewsletterSubscribe}>Subscribe Now</Button>
-            <Button variant="outline" onClick={() => setShowNewsletterPopup(false)}>
+            <Button onClick={handleNewsletterSubscribe} className="bg-green-500 text-white hover:bg-green-600">
+              Subscribe Now
+            </Button>
+            <Button variant="outline" onClick={() => setShowNewsletterPopup(false)} className="bg-white text-gray-800">
               Maybe Later
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ===== Main UI ===== */}
       {!generatedImage && (
         <>
-          <Card className="p-6 bg-card/50 backdrop-blur-sm border-primary/20 shadow-lg">
-            <h3 className="text-xl font-bold text-primary mb-4 text-center flex items-center justify-center gap-2">
-              <Sparkles className="w-5 h-5" />
-              How to use?
+          <Card className="p-6 bg-yellow-400/20 border-yellow-300 rounded-2xl shadow-lg">
+            <h3 className="text-2xl font-extrabold text-orange-800 mb-4 text-center flex items-center justify-center gap-2">
+              <Sparkles className="w-6 h-6 text-orange-500" />
+              How to Use?
             </h3>
-            <ul className="space-y-3">
-              <li className="flex items-center gap-3">
-                <span className="text-2xl">✏️</span>
-                <span className="text-muted-foreground">Type in the search bar</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="text-2xl">📚</span>
-                <span className="text-muted-foreground">Use ready-made prompts</span>
-              </li>
+            <ul className="space-y-3 text-gray-700">
+              <li className="flex items-center gap-3">✏️ Type your prompt below</li>
+              <li className="flex items-center gap-3">📚 Use ready-made coloring ideas</li>
             </ul>
           </Card>
 
-          <div className="text-center">
-            <h2 className="text-2xl font-bold text-primary mb-6 animate-bounce-gentle">
-              Want to do coloring? Start doing it.
+          <div className="text-center mt-4">
+            <h2 className="text-3xl font-bold text-orange-600 animate-bounce-gentle">
+              Want to do coloring? Start doing it🎨..
             </h2>
           </div>
         </>
       )}
 
       {generatedImage && (
-        <Card className="p-6 bg-card/50 backdrop-blur-sm border-primary/20 shadow-lg animate-in fade-in-50 duration-500">
-          <div className="flex justify-center mb-4">
+        <Card className="p-6 bg-white border-orange-200 shadow-xl rounded-2xl">
+          <div className="text-center mb-4">
             <img
               src={generatedImage || "/placeholder.svg"}
               alt={`Coloring page: ${currentPrompt}`}
-              className="max-w-full h-auto rounded-lg border-2 border-primary/20 shadow-md"
-              style={{ maxHeight: "300px" }}
+              className="w-full max-w-[500px] h-auto object-contain rounded-lg border-2 border-orange-500 shadow-md mx-auto"
             />
           </div>
-
           <div className="flex gap-3 justify-center">
             <Button
               onClick={handleDownload}
-              className="bg-primary text-white shadow-md hover:shadow-lg hover:scale-105 transition-all duration-200"
+              className="bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
             >
-              <Download className="w-4 h-4 mr-2" /> Download
+              <Download className="w-4 h-4 mr-2" />
+              Download
             </Button>
             <Button
               onClick={handlePrint}
-              variant="outline"
-              className="border-primary text-primary hover:bg-primary/10 shadow-md hover:scale-105 transition-all duration-200"
+              className="bg-green-500 text-white rounded-full hover:bg-green-600 shadow-md hover:shadow-lg transition-all duration-200 hover:scale-105"
             >
-              <Printer className="w-4 h-4 mr-2" /> Print the PDF
+              <Printer className="w-4 h-4 mr-2" />
+              Print
             </Button>
           </div>
         </Card>
       )}
 
-      {/* Input Form */}
+      {/* Input */}
       <form onSubmit={handleSubmit} className="relative">
-        <div className="flex items-center bg-card rounded-full p-2 shadow-lg border border-primary/20 hover:shadow-xl transition-shadow duration-200">
+        <div className="flex items-center bg-white rounded-full p-2 shadow-lg border border-orange-300 hover:shadow-xl transition duration-200">
           <Input
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="A butterfly on snowflower......"
-            className="flex-1 border-none bg-transparent text-lg px-4 focus-visible:ring-0 placeholder:text-muted-foreground/60"
+            placeholder="A butterfly on snowflower..."
+            className="flex-1 border-none bg-transparent text-lg px-4 focus-visible:ring-0 placeholder:text-gray-500"
             disabled={isGenerating}
           />
-          <Button type="button" size="icon" variant="ghost" className="rounded-full text-primary hover:bg-primary/10">
+          <Button
+            type="button"
+            size="icon"
+            variant="ghost"
+            className="rounded-full text-orange-500 hover:bg-orange-100 transition"
+          >
             <Mic className="w-5 h-5" />
           </Button>
         </div>
       </form>
 
-      {/* Loader */}
+      {/* Loading */}
       {isGenerating && (
-        <Card className="p-8 bg-card/50 backdrop-blur-sm border-primary/20 shadow-lg animate-in fade-in-50 duration-300">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <p className="text-lg text-muted-foreground">Creating your magical coloring page...</p>
-          </div>
+        <Card className="p-8 bg-yellow-100 border-yellow-300 shadow-md rounded-2xl text-center animate-pulse">
+          <Loader2 className="w-8 h-8 animate-spin text-orange-600 mx-auto mb-2" />
+          <p className="text-gray-700">Creating your magical coloring page...</p>
         </Card>
       )}
 
-      {/* Prompts Section */}
+      {/* Suggested Buttons */}
       {!isGenerating && (
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-center text-primary">🎨 Coloring Ideas</h3>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {SUGGESTED_PROMPTS.map((suggestedPrompt, index) => (
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-xl font-bold text-orange-700 text-center mb-4">🎨 Coloring Ideas</h3>
+            <div className="flex flex-wrap gap-3 justify-center">
+              {SUGGESTED_PROMPTS.map((p, i) => (
                 <Button
-                  key={index}
-                  onClick={() => handleSuggestedPrompt(suggestedPrompt)}
-                  variant="outline"
-                  className="rounded-full text-sm bg-card hover:bg-primary/10 border-primary/20 shadow-sm hover:scale-105 transition-all"
+                  key={i}
+                  onClick={() => handleSuggestedPrompt(p)}
+                  className="h-9 px-4 py-2 rounded-full text-sm bg-orange-500 text-white hover:bg-orange-600 hover:scale-105 border border-orange-600 shadow-sm hover:shadow-md transition-all duration-200 animate-float"
+                  style={{ animationDelay: `${i * 0.1}s` }}
                 >
-                  {suggestedPrompt}
+                  {p}
                 </Button>
               ))}
             </div>
           </div>
 
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-center text-primary">📚 Learning Cards</h3>
-            <div className="flex flex-wrap gap-2 justify-center">
-              {FLASHCARD_PROMPTS.map((flashcardPrompt, index) => (
+          <div>
+            <h3 className="text-xl font-bold text-orange-700 text-center mb-4">📚 Learning Cards</h3>
+            <div className="flex flex-wrap gap-3 justify-center">
+              {FLASHCARD_PROMPTS.map((p, i) => (
                 <Button
-                  key={`flashcard-${index}`}
-                  onClick={() => handleSuggestedPrompt(flashcardPrompt)}
-                  variant="outline"
-                  className="rounded-full text-sm bg-card hover:bg-primary/10 border-primary/20 shadow-sm hover:scale-105 transition-all"
+                  key={i}
+                  onClick={() => handleSuggestedPrompt(p)}
+                  className="h-9 px-4 py-2 rounded-full text-sm bg-yellow-400 text-gray-800 hover:bg-yellow-500 hover:scale-105 border border-yellow-500 shadow-sm hover:shadow-md transition-all duration-200 animate-float"
+                  style={{ animationDelay: `${i * 0.1}s` }}
                 >
-                  {flashcardPrompt}
+                  {p}
                 </Button>
               ))}
             </div>

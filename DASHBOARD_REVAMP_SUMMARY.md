@@ -10,7 +10,7 @@ I've completely revamped the dashboard page to be mobile-optimized, compact, and
 
 ### **Compact Layout**
 - ✅ **Single View**: Everything fits in one mobile screen
-- ✅ **Max Width**: `max-w-md` for optimal mobile viewing
+- ✅ **Max Width**: `max-w-lg` for optimal mobile viewing
 - ✅ **Tight Spacing**: `space-y-4` for compact sections
 - ✅ **Small Cards**: Minimal padding and compact content
 
@@ -38,7 +38,7 @@ I've completely revamped the dashboard page to be mobile-optimized, compact, and
 ### **3. Quick Actions - 2-Column Grid**
 - **Coloring Card**: Gradient background, palette icon
 - **Tracing Card**: Gradient background, pen tool icon
-- **Direct Links**: Navigate to `/app` page
+- **Direct Links**: Navigate to `/create` page
 - **Hover Effects**: Subtle shadow transitions
 
 ### **4. Recent Activity - Compact List**

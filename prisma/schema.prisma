@@ -14,15 +14,17 @@ model User {
   name                 String?
   image                String?
   createdAt            DateTime @default(now())
+  updatedAt            DateTime? @updatedAt  // ✅ Add this line
   plan                 Plan     @default(FREE)
   generationCount      Int      @default(0)
   stripeCustomerId     String?
   stripeSubscriptionId String?
   newsletterSubscribed Boolean  @default(false)
-  isAdmin              Boolean  @default(false) // ✅ New field
+  isAdmin              Boolean  @default(false)
 
   newsletterSubscribers NewsletterSubscriber[]
 }
+
 
 model NewsletterSubscriber {
   id        String   @id @default(cuid())

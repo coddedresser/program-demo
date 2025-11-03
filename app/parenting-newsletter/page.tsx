@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Mail, BookOpen, Users, Calendar, Star, ArrowRight } from "lucide-react"
+import { Mail, BookOpen, Users, Calendar, Star } from "lucide-react"
 import MobileHeader from "@/components/mobile-header"
 import MobileSidebar from "@/components/mobile-sidebar"
 import { useState } from "react"
@@ -37,17 +37,13 @@ export default function ParentingNewsletterPage() {
       })
 
       const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || "Subscription failed")
-      }
+      if (!res.ok) throw new Error(data.error || "Subscription failed")
 
       toast({
-        title: "Subscription Successful!",
-        description: "You’ll now receive our weekly parenting newsletter 🎉",
+        title: "Subscription Successful! 🎉",
+        description: "You’ll now receive our weekly parenting newsletter.",
         variant: "success",
       })
-
       setEmail("")
     } catch (error: any) {
       toast({
@@ -58,14 +54,6 @@ export default function ParentingNewsletterPage() {
     } finally {
       setIsSubscribing(false)
     }
-  }
-
-  const handleReadMore = (articleTitle: string) => {
-    toast({
-      title: `Opening "${articleTitle}"`,
-      description: "This feature will be available soon! Stay tuned.",
-      variant: "info",
-    })
   }
 
   const newsletterTopics = [
@@ -123,7 +111,7 @@ export default function ParentingNewsletterPage() {
       {/* Mobile Header */}
       <MobileHeader onMenuToggle={toggleSidebar} isMenuOpen={isSidebarOpen} />
 
-      {/* Mobile Sidebar */}
+      {/* Sidebar */}
       <MobileSidebar
         isOpen={isSidebarOpen}
         onClose={() => setIsSidebarOpen(false)}
@@ -132,25 +120,25 @@ export default function ParentingNewsletterPage() {
 
       {/* Main Content */}
       <div className="pt-16">
-        <div className="container max-w-4xl mx-auto px-4 py-8">
+        <div className="container max-w-md sm:max-w-lg mx-auto px-4 py-8 space-y-8">
           {/* Header */}
           <div className="text-center mb-12">
-            <div className="flex justify-center mb-4">
-              <Mail className="h-12 w-12 text-primary" />
+            <div className="flex justify-center mb-4 ">
+              <Mail className="h-12 w-12 text-orange-500 " />
             </div>
-            <h1 className="text-3xl font-bold text-primary mb-4">
+            <h1 className="text-3xl font-bold text-orange-600 mb-4 animate-bounce-gentle">
               Parenting Newsletter
             </h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Get expert parenting tips, educational insights, and creative activity ideas delivered to your inbox
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Get expert parenting tips, educational insights, and creative activity ideas delivered to your inbox.
             </p>
           </div>
 
-          {/* Newsletter Signup */}
-          <Card className="mb-8">
+          {/* Subscription Card */}
+          <Card className="bg-white border-orange-200 shadow-md rounded-2xl hover:shadow-lg transition-all duration-300">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-orange-700">
+                <Mail className="h-5 w-5" />
                 Subscribe to Our Newsletter
               </CardTitle>
               <CardDescription>
@@ -159,48 +147,57 @@ export default function ParentingNewsletterPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubscribe} className="space-y-4">
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Input
                     type="email"
                     placeholder="Enter your email address"
-                    className="flex-1"
+                    className="flex-1 border-orange-300 focus-visible:ring-orange-400"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     disabled={isSubscribing}
                   />
-                  <Button type="submit" disabled={isSubscribing}>
+                  <Button
+                    type="submit"
+                    disabled={isSubscribing}
+                    className="bg-orange-500 hover:bg-orange-600 text-white rounded-full"
+                  >
                     {isSubscribing ? "Subscribing..." : "Subscribe"}
                   </Button>
                 </div>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-gray-500">
                   We respect your privacy. Unsubscribe at any time.
                 </p>
               </form>
             </CardContent>
           </Card>
 
-          {/* Newsletter Topics */}
-          <Card className="mb-8">
+          {/* Topics */}
+          <Card className="bg-white border-orange-200 shadow-md rounded-2xl hover:shadow-lg transition-all duration-300">
             <CardHeader>
-              <CardTitle>What You'll Learn</CardTitle>
+              <CardTitle className="text-orange-700">What You'll Learn</CardTitle>
               <CardDescription>
                 Our newsletter covers these essential parenting topics
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-2 gap-6">
                 {newsletterTopics.map((topic, index) => {
                   const Icon = topic.icon
                   return (
-                    <div key={index} className="flex gap-4">
+                    <div
+                      key={index}
+                      className="flex gap-4 bg-orange-50/40 p-3 rounded-xl hover:bg-orange-100 transition-colors"
+                    >
                       <div className="flex-shrink-0">
-                        <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Icon className="h-6 w-6 text-primary" />
+                        <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
+                          <Icon className="h-6 w-6 text-orange-600" />
                         </div>
                       </div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg mb-2">{topic.title}</h3>
-                        <p className="text-muted-foreground">{topic.description}</p>
+                      <div>
+                        <h3 className="font-semibold text-lg text-orange-700 mb-1">
+                          {topic.title}
+                        </h3>
+                        <p className="text-gray-600">{topic.description}</p>
                       </div>
                     </div>
                   )
@@ -210,9 +207,9 @@ export default function ParentingNewsletterPage() {
           </Card>
 
           {/* Recent Articles */}
-          <Card className="mb-8">
+          <Card className="bg-white border-orange-200 shadow-md rounded-2xl hover:shadow-lg transition-all duration-300">
             <CardHeader>
-              <CardTitle>Recent Articles</CardTitle>
+              <CardTitle className="text-orange-700">Recent Articles</CardTitle>
               <CardDescription>
                 Latest insights from our parenting experts
               </CardDescription>
@@ -220,40 +217,32 @@ export default function ParentingNewsletterPage() {
             <CardContent>
               <div className="space-y-4">
                 {recentArticles.map((article, index) => (
-                  <div key={index} className="p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-lg">{article.title}</h3>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        <span>{article.date}</span>
-                      </div>
+                  <div
+                    key={index}
+                    className="p-4 border border-orange-100 rounded-xl bg-orange-50/40 hover:bg-orange-100 transition-all duration-200"
+                  >
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+                      <h3 className="font-semibold text-lg text-orange-700">
+                        {article.title}
+                      </h3>
+                      <span className="text-sm text-gray-500 mt-1 sm:mt-0">
+                        {article.date} • {article.readTime}
+                      </span>
                     </div>
-                    <p className="text-muted-foreground mb-3">{article.excerpt}</p>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-muted-foreground">{article.readTime}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-primary"
-                        onClick={() => handleReadMore(article.title)}
-                      >
-                        Read More
-                        <ArrowRight className="h-3 w-3 ml-1" />
-                      </Button>
-                    </div>
+                    <p className="text-gray-600">{article.excerpt}</p>
                   </div>
                 ))}
               </div>
             </CardContent>
           </Card>
 
-          {/* Newsletter Benefits */}
-          <Card className="mb-8">
+          {/* Benefits */}
+          <Card className="bg-white border-orange-200 shadow-md rounded-2xl hover:shadow-lg transition-all duration-300">
             <CardHeader>
-              <CardTitle>Why Subscribe?</CardTitle>
+              <CardTitle className="text-orange-700">Why Subscribe?</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid sm:grid-cols-3 gap-6">
                 {[
                   {
                     icon: Star,
@@ -273,12 +262,17 @@ export default function ParentingNewsletterPage() {
                 ].map((benefit, i) => {
                   const Icon = benefit.icon
                   return (
-                    <div key={i} className="text-center">
-                      <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                        <Icon className="h-6 w-6 text-primary" />
+                    <div
+                      key={i}
+                      className="text-center bg-orange-50/40 p-4 rounded-xl hover:bg-orange-100 transition-colors"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center mx-auto mb-3">
+                        <Icon className="h-6 w-6 text-orange-600" />
                       </div>
-                      <h3 className="font-semibold mb-2">{benefit.title}</h3>
-                      <p className="text-sm text-muted-foreground">{benefit.desc}</p>
+                      <h3 className="font-semibold text-orange-700 mb-2">
+                        {benefit.title}
+                      </h3>
+                      <p className="text-sm text-gray-600">{benefit.desc}</p>
                     </div>
                   )
                 })}
@@ -287,12 +281,12 @@ export default function ParentingNewsletterPage() {
           </Card>
 
           {/* Testimonials */}
-          <Card>
+          <Card className="bg-white border-orange-200 shadow-md rounded-2xl hover:shadow-lg transition-all duration-300 mb-10">
             <CardHeader>
-              <CardTitle>What Parents Say</CardTitle>
+              <CardTitle className="text-orange-700">What Parents Say</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid md:grid-cols-2 gap-6">
+              <div className="grid sm:grid-cols-2 gap-6">
                 {[
                   {
                     text: "The newsletter has been a game-changer for our family. The tips are practical and easy to implement.",
@@ -303,14 +297,17 @@ export default function ParentingNewsletterPage() {
                     author: "Michael R., Father of 3",
                   },
                 ].map((t, i) => (
-                  <div key={i} className="p-4 border rounded-lg">
+                  <div
+                    key={i}
+                    className="p-4 border border-orange-100 rounded-xl bg-orange-50/40 hover:bg-orange-100 transition-all"
+                  >
                     <div className="flex items-center gap-1 mb-2">
                       {[...Array(5)].map((_, j) => (
                         <Star key={j} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                       ))}
                     </div>
-                    <p className="text-muted-foreground mb-3">{t.text}</p>
-                    <p className="text-sm font-medium">{t.author}</p>
+                    <p className="text-gray-600 mb-3">{t.text}</p>
+                    <p className="text-sm font-medium text-orange-700">{t.author}</p>
                   </div>
                 ))}
               </div>
