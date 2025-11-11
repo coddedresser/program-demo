@@ -49,6 +49,15 @@ export default function TracingPage() {
 
   const { trackActivity } = useUserDataCollection();
 
+  // ✅ Disable scrolling when the login popup is open
+  useEffect(() => {
+    if (showLoginPrompt) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+  }, [showLoginPrompt]);
+
   useEffect(() => {
     if (isAuthenticated) resetGuestGenerations();
   }, [isAuthenticated]);
@@ -152,13 +161,13 @@ export default function TracingPage() {
 
   return (
     <>
-      {/* 🟠 Login Popup - moved outside blurred container */}
+      {/* 🟠 Login Popup — fixed at top & disables scrolling */}
       {showLoginPrompt && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-10">
           {/* Background overlay */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
           {/* Popup content */}
-          <div className="relative z-10">
+          <div className="relative z-10 w-full max-w-md mx-auto">
             <LoginPrompt
               onClose={() => {
                 setShowLoginPrompt(false);
@@ -169,7 +178,7 @@ export default function TracingPage() {
         </div>
       )}
 
-      {/* 🟡 Main Content (can blur) */}
+      {/* 🟡 Main Content (blurs when popup active) */}
       <div
         className={`relative flex flex-col items-center justify-start min-h-screen w-full px-4 py-8 sm:py-12 bg-gradient-to-b from-yellow-50 to-white transition-all duration-500 ${
           blurred ? "blur-sm pointer-events-none" : ""

@@ -49,6 +49,15 @@ export default function ColoringPage() {
   } = useAuthGate();
   const { trackActivity } = useUserDataCollection();
 
+  // ✅ Disable scrolling when popup is open
+  useEffect(() => {
+    if (showLoginPrompt) {
+      document.body.style.overflow = "hidden"; // disable scroll
+    } else {
+      document.body.style.overflow = ""; // re-enable scroll
+    }
+  }, [showLoginPrompt]);
+
   // ✅ Fetch user and handle guest reset
   useEffect(() => {
     if (isAuthenticated) resetGuestGenerations();
@@ -174,13 +183,13 @@ export default function ColoringPage() {
 
   return (
     <>
-      {/* 🟠 Login Popup — moved outside blur so it stays crisp */}
+      {/* 🟠 Login Popup — fixed at top & disables scroll */}
       {showLoginPrompt && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
-          {/* Background overlay */}
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-10">
+          {/* Dim background */}
           <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]" />
-          {/* Popup itself */}
-          <div className="relative z-10">
+          {/* Popup container */}
+          <div className="relative z-10 w-full max-w-md mx-auto">
             <LoginPrompt
               onClose={() => {
                 setShowLoginPrompt(false);
@@ -191,7 +200,7 @@ export default function ColoringPage() {
         </div>
       )}
 
-      {/* 🟡 Main Page (can blur) */}
+      {/* 🟡 Main Page (can blur when login prompt open) */}
       <div
         className={`relative flex flex-col items-center justify-start w-full min-h-[80vh] max-w-5xl mx-auto space-y-6 px-4 sm:px-6 md:px-8 lg:px-12 transition-all duration-500 ${
           blurred ? "blur-sm pointer-events-none" : ""

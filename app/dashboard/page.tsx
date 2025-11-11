@@ -146,7 +146,7 @@ export default function Dashboard() {
 
           {/* Quick Actions */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Link href="/create">
+            <Link href="/create?mode=coloring">
               <Card className="p-4 text-center border-0 shadow-sm bg-gradient-to-br from-orange-100 to-orange-50 dark:from-orange-900/40 dark:to-orange-800/30 hover:shadow-lg hover:scale-[1.02] transition-all rounded-xl">
                 <Palette className="h-6 w-6 text-orange-600 mx-auto mb-2" />
                 <div className="text-sm font-semibold text-orange-700">
@@ -157,7 +157,7 @@ export default function Dashboard() {
                 </div>
               </Card>
             </Link>
-            <Link href="/create">
+            <Link href="/create?mode=tracing">
               <Card className="p-4 text-center border-0 shadow-sm bg-gradient-to-br from-orange-200/50 to-orange-100 hover:shadow-lg hover:scale-[1.02] transition-all rounded-xl">
                 <PenTool className="h-6 w-6 text-orange-600 mx-auto mb-2" />
                 <div className="text-sm font-semibold text-orange-700">

@@ -8,7 +8,8 @@ export default function LoginPrompt({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fadeIn">
+    // 🟢 Fixed overlay at top with scroll disabled
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-10 bg-black/40 backdrop-blur-sm animate-fadeIn overflow-hidden">
       <Card className="p-8 bg-white rounded-2xl shadow-2xl text-center border-4 border-orange-400 max-w-sm mx-auto">
         <h2 className="text-2xl font-extrabold text-orange-600 mb-4">
           Login to Continue
