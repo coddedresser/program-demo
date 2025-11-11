@@ -14,7 +14,7 @@ model User {
   name                 String?
   image                String?
   createdAt            DateTime @default(now())
-  updatedAt            DateTime? @updatedAt  // ✅ Add this line
+  updatedAt            DateTime? @updatedAt
   plan                 Plan     @default(FREE)
   generationCount      Int      @default(0)
   stripeCustomerId     String?
@@ -22,9 +22,24 @@ model User {
   newsletterSubscribed Boolean  @default(false)
   isAdmin              Boolean  @default(false)
 
+  coloringCount        Int      @default(0)    // ✅ New: track coloring pages
+  tracingCount         Int      @default(0)    // ✅ New: track tracing pages
+  totalSessionHours    Float    @default(0)    // ✅ New: track total logged-in hours
+
+  // Relations
   newsletterSubscribers NewsletterSubscriber[]
+  activities            Activity[]             // ✅ New: relation to user activity
 }
 
+model Activity {
+  id          String   @id @default(cuid())
+  type        ActivityType
+  prompt      String
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
 
 model NewsletterSubscriber {
   id        String   @id @default(cuid())
@@ -37,4 +52,9 @@ model NewsletterSubscriber {
 enum Plan {
   FREE
   PREMIUM
+}
+
+enum ActivityType {
+  COLORING
+  TRACING
 }

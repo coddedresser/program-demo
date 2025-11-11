@@ -6,9 +6,10 @@ export default withAuth(
   async function middleware(req: NextRequest) {
     const pathname = req.nextUrl.pathname;
 
-    // Allow all public paths defined below
+    // ✅ Allow all public paths below (no login required)
     if (
       pathname === "/" ||
+      pathname.startsWith("/create") || // ✅ Allow access to /create without login
       pathname.startsWith("/api/auth/health") ||
       pathname.startsWith("/api/generate-coloring") ||
       pathname.startsWith("/api/generate-tracing") ||
@@ -20,12 +21,12 @@ export default withAuth(
     // ✅ Get authenticated user info from Kinde session
     const user = req.kindeAuth?.user;
 
-    // Not logged in → redirect to login
+    // 🔒 Not logged in → redirect to login page
     if (!user) {
       return NextResponse.redirect(new URL("/api/auth/login", req.url));
     }
 
-    // ✅ Check if user is admin when accessing /admin routes
+    // ✅ Restrict admin-only routes
     if (pathname.startsWith("/admin")) {
       const dbUser = await prisma.user.findUnique({
         where: { email: user.email },
@@ -38,13 +39,14 @@ export default withAuth(
       }
     }
 
-    // Continue if all checks pass
+    // ✅ Allow access if all checks pass
     return NextResponse.next();
   },
   {
     isReturnToCurrentPage: true,
     publicPaths: [
-      "/",
+      "/", // homepage
+      "/create", // ✅ create page is now public
       "/api/auth/health",
       "/api/generate-coloring",
       "/api/generate-tracing",
@@ -54,12 +56,12 @@ export default withAuth(
   }
 );
 
+// ✅ Matcher config: don’t include /create
 export const config = {
   matcher: [
     "/dashboard/:path*",
     "/admin/:path*",
-    "/create/:path*",
-    // Exclude Next.js internals and static assets
+    // ⚠️ removed "/create/:path*" so /create won’t be protected
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
   ],
 };
